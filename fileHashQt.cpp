@@ -24,6 +24,7 @@ void fileStatus_s::read_f(const QJsonObject &json)
     filename_pub = json["filename"].toString();
     hash_pub = json["hash"].toString().toULongLong();
     fileSize_pub = json["fileSize"].toString().toULongLong();
+    fileLastModificationDatetime_pub = json["fileLastModificationDatetime"].toString().toLongLong();
 }
 
 void fileStatus_s::write_f(QJsonObject &json) const
@@ -33,6 +34,7 @@ void fileStatus_s::write_f(QJsonObject &json) const
     //so... use string notation
     json["hash"] = QString::number(hash_pub);
     json["fileSize"] = QString::number(fileSize_pub);
+    json["fileLastModificationDatetime"] = QString::number(fileLastModificationDatetime_pub);
 }
 
 void fileStatusArray_s::read_f(const QJsonObject &json)
