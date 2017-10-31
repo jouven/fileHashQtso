@@ -42,7 +42,7 @@ struct fileStatusArray_s
     fileStatusArray_s(const std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par_con);
 };
 
-uint_fast64_t getFileHash_f(const std::string& filepath_par_con);
+uint_fast64_t getFileHash_f(const QString &filepath_par_con);
 
 //add file information into a dictionary
 //returns true if there has been a change, or said in another way, only if a file hash is the same it will return false

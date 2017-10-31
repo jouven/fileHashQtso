@@ -1,7 +1,7 @@
 #include "fileHashQt.hpp"
 
 //#include "essentialQtso/essentialQt.hpp"
-#include "criptoso/hash.hpp"
+#include "criptoQtso/hashQt.hpp"
 
 #include <QJsonArray>
 #include <QDateTime>
@@ -72,17 +72,17 @@ fileStatusArray_s::fileStatusArray_s(
     }
 }
 
-uint_fast64_t getFileHash_f(const std::string& filepath_par_con)
+uint_fast64_t getFileHash_f(const QString& filepath_par_con)
 {
-    eines::crypto::hash::hasher_c hasher
+    eines::hasher_c hasher
     (
-        eines::crypto::hash::hasher_c::inputType_ec::file
+        eines::hasher_c::inputType_ec::file
         , filepath_par_con
-        , eines::crypto::hash::hasher_c::outputType_ec::empty
-        , eines::crypto::hash::hasher_c::hashType_ec::XXHASH64
+        , eines::hasher_c::outputType_ec::number
+        , eines::hasher_c::hashType_ec::XXHASH64
     );
-    hasher.executeOperation_f();
-    return hasher.getResponse_f().hashResult_pub_con;
+    hasher.generateHash_f();
+    return hasher.hashNumberResult_f();
 }
 
 bool hashFileInUMAP_f(
@@ -121,7 +121,7 @@ bool hashFileInUMAP_f(
         if (sourceDatetimeChanged)
         {
             //qout_glo << "hashing source (datetime changed)" << endl;
-            auto fileNewHastTmp(getFileHash_f(source_par_con.absoluteFilePath().toStdString()));
+            auto fileNewHastTmp(getFileHash_f(source_par_con.absoluteFilePath()));
             //same hash
             if (fileNewHastTmp == findFileStatusResult->second.hash_pub)
             {
@@ -143,7 +143,7 @@ bool hashFileInUMAP_f(
         //qout_glo << "hashing source (initial run)" << endl;
         sourceFileStatus.filename_pub = source_par_con.absoluteFilePath();
         sourceFileStatus.fileLastModificationDatetime_pub = source_par_con.lastModified().toMSecsSinceEpoch();
-        sourceFileStatus.hash_pub = getFileHash_f(source_par_con.absoluteFilePath().toStdString());
+        sourceFileStatus.hash_pub = getFileHash_f(source_par_con.absoluteFilePath());
         sourceFileStatus.fileSize_pub = source_par_con.size();
         sourceFileStatus.iterated_pub = true;
         //sourceFileStatus.pathType = pathType_ec::file;

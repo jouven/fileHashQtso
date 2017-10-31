@@ -1,10 +1,4 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2017-09-04T18:22:01
-#
-#-------------------------------------------------
-
-QT       -= gui
+QT -= gui
 
 TARGET = fileHashQtso
 TEMPLATE = lib
@@ -35,7 +29,7 @@ win32:MYPATH = "H:/veryuseddata/portable/msys64/"
 #mine
 INCLUDEPATH += $${MYPATH}home/jouven/mylibs/include
 
-LIBS += -lcriptoso
+LIBS += -lcriptoQtso
 #don't new line the "{"
 #release
 CONFIG(release, debug|release){
