@@ -1,3 +1,4 @@
+#message($$QMAKESPEC)
 QT -= gui
 
 TARGET = fileHashQtso
@@ -29,7 +30,6 @@ win32:MYPATH = "H:/veryuseddata/portable/msys64/"
 #mine
 INCLUDEPATH += $${MYPATH}home/jouven/mylibs/include
 
-LIBS += -lcriptoQtso
 #don't new line the "{"
 #release
 CONFIG(release, debug|release){
@@ -41,20 +41,25 @@ CONFIG(release, debug|release){
 CONFIG(debug, debug|release){
     LIBS += -L$${MYPATH}home/jouven/mylibs/debug/ -lbackwardSTso #-lessentialQtso
     DEPENDPATH += $${MYPATH}home/jouven/mylibs/debug
-    DEFINES += DEBUGJOUVEN
     QMAKE_RPATHDIR += $${MYPATH}home/jouven/mylibs/debug
+    DEFINES += DEBUGJOUVEN
 }
+
+LIBS += -lcriptoQtso
 
 QMAKE_CXXFLAGS_DEBUG -= -g
 QMAKE_CXXFLAGS_DEBUG += -pedantic -Wall -Wextra -g3
-#mingw (on msys2) can't handle lto
-!win32:QMAKE_CXXFLAGS_RELEASE += -flto
+
+#if not win32, add flto, mingw (on msys2) can't handle lto
+unix:QMAKE_CXXFLAGS_RELEASE += -flto=jobserver
+#qt QMAKE defaults strike again, adds -mtune=core2 just because in win32
+win32:QMAKE_CXXFLAGS -= -mtune=core2
 QMAKE_CXXFLAGS_RELEASE += -mtune=sandybridge
 
-#for some reason QMAKE defaults add this to the linker, which is useless
-QMAKE_LFLAGS -= -m64
-#only for release...
-QMAKE_LFLAGS_RELEASE -= -Wl,-O1
+#for -flto=jobserver in the link step to work with -j4
+unix:QMAKE_LINK = +g++
 
-!win32:QMAKE_LFLAGS_RELEASE += -flto
+unix:QMAKE_LFLAGS += -fuse-ld=gold
 QMAKE_LFLAGS_RELEASE += -fvisibility=hidden
+#if not win32, add flto, mingw (on msys2) can't handle lto
+unix:QMAKE_LFLAGS_RELEASE += -flto=jobserver
