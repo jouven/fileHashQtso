@@ -177,7 +177,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
     if (not xFileFoundRoot)
     {
         //source dir, get the root files
-        QStringList rootFileListUnfiltered(sourceDir.entryList(QDir::Files | QDir::Hidden));
+        QStringList rootFileListUnfiltered(sourceDir.entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot));
         for (const QString& filename_ite_con : rootFileListUnfiltered)
         {
             if (filename_ite_con == includeDirectoriesWithFileX_par_con)
@@ -190,7 +190,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
     if (xFileFoundRoot)
     {
         //source dir, get the root files
-        QStringList rootFileList(sourceDir.entryList(filenameFilters_par_con, QDir::Files | QDir::Hidden));
+        QStringList rootFileList(sourceDir.entryList(filenameFilters_par_con, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot));
         for (const QString& filename_ite_con : rootFileList)
         {
             //QOUT_TS("filename_ite_con " << filename_ite_con << endl);
@@ -209,7 +209,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
     if (includeSubdirectories_par_con)
     {
         //source dir, get the all the subfolders (names) of the base folder
-        QStringList subfolders(sourceDir.entryList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot));
+        QStringList subfolders(sourceDir.entryList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot | QDir::NoSymLinks));
 
         //while subfolders keep being found
         while (not subfolders.isEmpty())
@@ -224,7 +224,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
                 QDir currentSubfolderDirTmp(source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con);
 
                 //get the subfolders of the one it's iterating
-                QStringList subFoldersTmp(currentSubfolderDirTmp.entryList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot));
+                QStringList subFoldersTmp(currentSubfolderDirTmp.entryList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot | QDir::NoSymLinks));
                 //for the found subfolder, prepend the previous subfolder path string
                 for (auto& subfolderTmp_ite : subFoldersTmp)
                 {
@@ -240,7 +240,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
                 if (not xFileFoundSubdirectory)
                 {
                     //get the files of the subfolder
-                    QStringList subDirectoryFileListUnfiltered(currentSubfolderDirTmp.entryList(QDir::Files | QDir::Hidden));
+                    QStringList subDirectoryFileListUnfiltered(currentSubfolderDirTmp.entryList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot));
                     for (const QString& filename_ite_con : subDirectoryFileListUnfiltered)
                     {
                         if (filename_ite_con == includeDirectoriesWithFileX_par_con)
@@ -254,7 +254,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
                 if (xFileFoundSubdirectory)
                 {
                     //get the files of the subfolder
-                    QStringList subDirectoryFileList(currentSubfolderDirTmp.entryList(filenameFilters_par_con, QDir::Files | QDir::Hidden));
+                    QStringList subDirectoryFileList(currentSubfolderDirTmp.entryList(filenameFilters_par_con, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot));
                     for (const auto& filename_ite_con : subDirectoryFileList)
                     {
                         //qDebug() << "source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con " << source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con << endl;
