@@ -78,7 +78,7 @@ uint_fast64_t getFileHash_f(const QString& filepath_par_con)
     (
         eines::hasher_c::inputType_ec::file
         , filepath_par_con
-        , eines::hasher_c::outputType_ec::number
+        , eines::hasher_c::outputType_ec::unsigned64bitInteger
         , eines::hasher_c::hashType_ec::XXHASH64
     );
     hasher.generateHash_f();
