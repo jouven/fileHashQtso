@@ -20,6 +20,7 @@ struct fileStatus_s
     uint_fast64_t fileSize_pub = 0;
     bool iterated_pub = false;
 
+    bool hashing_pub = false;
     fileStatus_s() = default;
     fileStatus_s(
             const QString& filename_par_con
@@ -42,23 +43,34 @@ struct fileStatusArray_s
     fileStatusArray_s(const std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par_con);
 };
 
+
 uint_fast64_t getFileHash_f(const QString &filepath_par_con);
 
 //add file information into a dictionary
 //returns true if there has been a change, or said in another way, only if a file hash is the same it will return false
 bool hashFileInUMAP_f(
-    std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
-    , const QFileInfo& source_par_con
-);
+        std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
+        , const QFileInfo& source_par_con
+        //if a mutexname is not empty, a mutex from the qmutexUMapQtso will be used with that name
+        //when accessing/modifying fileStatusUMAP_par
+        , const std::string& mutexName_par_con = std::string()
+        );
 
 //add all the files of a directory (and subdirectories) into a dictionary
 //returns true if any file hash has changed
-bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
-    , const QFileInfo& source_par_con
-    , const QStringList& filenameFilters_par_con
-    , const bool includeSubdirectories_par_con = true
-    , const QString &includeDirectoriesWithFileX_par_con = QString()
+bool hashDirectoryInUMAP_f(
+        std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
+        , const QFileInfo& source_par_con
+        //if a mutexname is not empty, a mutex from the qmutexUMapQtso will be used with that name
+        //when accessing/modifying fileStatusUMAP_par
+        , const std::string& mutexName_par_con = std::string()
+        , const QStringList& filenameFilters_par_con = QStringList()
+        , const bool includeSubdirectories_par_con = true
+        , const QString &includeDirectoriesWithFileX_par_con = QString()
 );
+
+
+
 
 
 #endif // FILEHASHQTSO_FILEHASH_HPP

@@ -2,6 +2,7 @@
 
 //#include "essentialQtso/essentialQt.hpp"
 #include "criptoQtso/hashQt.hpp"
+#include "qmutexUMapQtso/qmutexUMapQt.hpp"
 
 #include <QJsonArray>
 #include <QDateTime>
@@ -85,10 +86,9 @@ uint_fast64_t getFileHash_f(const QString& filepath_par_con)
     return hasher.hash64BitNumberResult_f();
 }
 
-bool hashFileInUMAP_f(
-    std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
+bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
     , const QFileInfo& source_par_con
-)
+    , const std::string& mutexName_par_con)
 {
     bool sourceChanged(false);
     if (not source_par_con.exists())
@@ -98,9 +98,14 @@ bool hashFileInUMAP_f(
 
     bool sourceDatetimeChanged(false);
     fileStatus_s sourceFileStatus;
-    //fileStatus_s destinationFileStatus;
+
+    if (not mutexName_par_con.empty())
+    {
+        getAddMutex_f(mutexName_par_con)->lock();
+    }
     //check source
     auto findFileStatusResult(fileStatusUMAP_par.find(source_par_con.absoluteFilePath().toStdString()));
+
     //source found
     if (findFileStatusResult != fileStatusUMAP_par.end())
     {
@@ -121,7 +126,16 @@ bool hashFileInUMAP_f(
         if (sourceDatetimeChanged)
         {
             //qout_glo << "hashing source (datetime changed)" << endl;
+            findFileStatusResult->second.hashing_pub = true;
+            if (not mutexName_par_con.empty())
+            {
+                getAddMutex_f(mutexName_par_con)->unlock();
+            }
             auto fileNewHastTmp(getFileHash_f(source_par_con.absoluteFilePath()));
+            if (not mutexName_par_con.empty())
+            {
+                getAddMutex_f(mutexName_par_con)->lock();
+            }
             //same hash
             if (fileNewHastTmp == findFileStatusResult->second.hash_pub)
             {
@@ -134,12 +148,16 @@ bool hashFileInUMAP_f(
                 sourceChanged = true;
             }
         }
-
+        findFileStatusResult->second.hashing_pub = false;
         sourceFileStatus = findFileStatusResult->second;
     }
     //source element not found in umap, so create element and insert into umap
     else
     {
+        if (not mutexName_par_con.empty())
+        {
+            getAddMutex_f(mutexName_par_con)->unlock();
+        }
         //qout_glo << "hashing source (initial run)" << endl;
         sourceFileStatus.filename_pub = source_par_con.absoluteFilePath();
         sourceFileStatus.fileLastModificationDatetime_pub = source_par_con.lastModified().toMSecsSinceEpoch();
@@ -147,10 +165,17 @@ bool hashFileInUMAP_f(
         sourceFileStatus.fileSize_pub = source_par_con.size();
         sourceFileStatus.iterated_pub = true;
         //sourceFileStatus.pathType = pathType_ec::file;
-
+        if (not mutexName_par_con.empty())
+        {
+            getAddMutex_f(mutexName_par_con)->lock();
+        }
         fileStatusUMAP_par.emplace(source_par_con.absoluteFilePath().toStdString(), sourceFileStatus);
         sourceDatetimeChanged = true;
         sourceChanged = true;
+    }
+    if (not mutexName_par_con.empty())
+    {
+        getAddMutex_f(mutexName_par_con)->unlock();
     }
     return sourceChanged;
 }
@@ -159,6 +184,7 @@ bool hashFileInUMAP_f(
 //destination is dir (exists or not exists)
 bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
     , const QFileInfo& source_par_con
+    , const std::string& mutexName_par_con
     , const QStringList& filenameFilters_par_con
     , const bool includeSubdirectories_par_con
     , const QString& includeDirectoriesWithFileX_par_con)
@@ -263,6 +289,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
                                     hashFileInUMAP_f(
                                         fileStatusUMAP_par
                                         , sourceFileTmp
+                                        , mutexName_par_con
                                         )
                                     );
                         //if a copy happened or the file it's the same consider it as successful
