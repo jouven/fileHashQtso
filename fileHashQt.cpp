@@ -64,10 +64,10 @@ void fileStatusArray_s::write_f(QJsonObject &json) const
 }
 
 fileStatusArray_s::fileStatusArray_s(
-        const std::unordered_map<std::string, fileStatus_s> &fileStatusUMAP_par_con)
+        const std::unordered_map<std::string, fileStatus_s> &fileStatusUMAP_pub_con)
 {
-    fileStatusVector_pub.reserve(fileStatusUMAP_par_con.size());
-    for (const auto& item_ite_con : fileStatusUMAP_par_con)
+    fileStatusVector_pub.reserve(fileStatusUMAP_pub_con.size());
+    for (const auto& item_ite_con : fileStatusUMAP_pub_con)
     {
         fileStatusVector_pub.emplace_back(item_ite_con.second);
     }
@@ -86,9 +86,8 @@ uint_fast64_t getFileHash_f(const QString& filepath_par_con)
     return hasher.hash64BitNumberResult_f();
 }
 
-bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
-    , const QFileInfo& source_par_con
-    , const std::string& mutexName_par_con)
+bool fileHashControl_c::hashFileInUMAP_f(
+    const QFileInfo& source_par_con)
 {
     bool sourceChanged(false);
     if (not source_par_con.exists())
@@ -96,19 +95,17 @@ bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusU
         return sourceChanged;
     }
 
-    bool sourceDatetimeChanged(false);
-    fileStatus_s sourceFileStatus;
-
-    if (not mutexName_par_con.empty())
+    if (not mutexName_pri.empty())
     {
-        getAddMutex_f(mutexName_par_con)->lock();
+        getAddMutex_f(mutexName_pri)->lock();
     }
     //check source
-    auto findFileStatusResult(fileStatusUMAP_par.find(source_par_con.absoluteFilePath().toStdString()));
+    auto findFileStatusResult(fileStatusUMAP_pub.find(source_par_con.absoluteFilePath().toStdString()));
 
     //source found
-    if (findFileStatusResult != fileStatusUMAP_par.end())
+    if (findFileStatusResult != fileStatusUMAP_pub.end())
     {
+        bool sourceDatetimeChanged(false);
         findFileStatusResult->second.iterated_pub = true;
         //check if time changed
         if (findFileStatusResult->second.fileLastModificationDatetime_pub == source_par_con.lastModified().toMSecsSinceEpoch())
@@ -120,6 +117,7 @@ bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusU
             //update time on source umap
             findFileStatusResult->second.fileLastModificationDatetime_pub = source_par_con.lastModified().toMSecsSinceEpoch();
             findFileStatusResult->second.fileSize_pub = source_par_con.size();
+            fileStatusUMAPChanged_pri = true;
             sourceDatetimeChanged = true;
         }
         //if time changed, check hash
@@ -127,17 +125,20 @@ bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusU
         {
             //qout_glo << "hashing source (datetime changed)" << endl;
             findFileStatusResult->second.hashing_pub = true;
-            if (not mutexName_par_con.empty())
+            uint_fast64_t currentHashTmp(findFileStatusResult->second.hash_pub);
+            if (not mutexName_pri.empty())
             {
-                getAddMutex_f(mutexName_par_con)->unlock();
+                getAddMutex_f(mutexName_pri)->unlock();
             }
             auto fileNewHastTmp(getFileHash_f(source_par_con.absoluteFilePath()));
-            if (not mutexName_par_con.empty())
+            if (not mutexName_pri.empty())
             {
-                getAddMutex_f(mutexName_par_con)->lock();
+                getAddMutex_f(mutexName_pri)->lock();
+                //since the UMap could have changed because of the unlocking, find again
+                findFileStatusResult = fileStatusUMAP_pub.find(source_par_con.absoluteFilePath().toStdString());
             }
             //same hash
-            if (fileNewHastTmp == findFileStatusResult->second.hash_pub)
+            if (fileNewHastTmp == currentHashTmp)
             {
                 //file hash hasn't changed, nothing to do
             }
@@ -145,46 +146,47 @@ bool hashFileInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusU
             {
                 //update hash on source umap
                 findFileStatusResult->second.hash_pub = fileNewHastTmp;
+                fileStatusUMAPChanged_pri = true;
                 sourceChanged = true;
             }
+            findFileStatusResult->second.hashing_pub = false;
         }
-        findFileStatusResult->second.hashing_pub = false;
-        sourceFileStatus = findFileStatusResult->second;
+        //sourceFileStatus = findFileStatusResult->second;
     }
     //source element not found in umap, so create element and insert into umap
     else
     {
-        if (not mutexName_par_con.empty())
+        if (not mutexName_pri.empty())
         {
-            getAddMutex_f(mutexName_par_con)->unlock();
+            getAddMutex_f(mutexName_pri)->unlock();
         }
         //qout_glo << "hashing source (initial run)" << endl;
-        sourceFileStatus.filename_pub = source_par_con.absoluteFilePath();
-        sourceFileStatus.fileLastModificationDatetime_pub = source_par_con.lastModified().toMSecsSinceEpoch();
-        sourceFileStatus.hash_pub = getFileHash_f(source_par_con.absoluteFilePath());
-        sourceFileStatus.fileSize_pub = source_par_con.size();
-        sourceFileStatus.iterated_pub = true;
-        //sourceFileStatus.pathType = pathType_ec::file;
-        if (not mutexName_par_con.empty())
+        fileStatus_s sourceFileStatus(
+               source_par_con.absoluteFilePath()
+               , getFileHash_f(source_par_con.absoluteFilePath())
+               , source_par_con.lastModified().toMSecsSinceEpoch()
+               , source_par_con.size()
+        );
+
+        if (not mutexName_pri.empty())
         {
-            getAddMutex_f(mutexName_par_con)->lock();
+            getAddMutex_f(mutexName_pri)->lock();
         }
-        fileStatusUMAP_par.emplace(source_par_con.absoluteFilePath().toStdString(), sourceFileStatus);
-        sourceDatetimeChanged = true;
+        fileStatusUMAP_pub.emplace(source_par_con.absoluteFilePath().toStdString(), sourceFileStatus);
+        fileStatusUMAPChanged_pri = true;
         sourceChanged = true;
     }
-    if (not mutexName_par_con.empty())
+    if (not mutexName_pri.empty())
     {
-        getAddMutex_f(mutexName_par_con)->unlock();
+        getAddMutex_f(mutexName_pri)->unlock();
     }
     return sourceChanged;
 }
 
 //source is dir and exists
 //destination is dir (exists or not exists)
-bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileStatusUMAP_par
-    , const QFileInfo& source_par_con
-    , const std::string& mutexName_par_con
+bool fileHashControl_c::hashDirectoryInUMAP_f(
+    const QFileInfo& source_par_con
     , const QStringList& filenameFilters_par_con
     , const bool includeSubdirectories_par_con
     , const QString& includeDirectoriesWithFileX_par_con)
@@ -223,8 +225,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
             QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + QDir::separator() + filename_ite_con);
             const auto resultFile(
                         hashFileInUMAP_f(
-                            fileStatusUMAP_par
-                            , sourceFileTmp
+                            sourceFileTmp
                             )
                         );
             //last result and a copy happened or nothing changed
@@ -287,9 +288,7 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
                         QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con);
                         const auto resultFile(
                                     hashFileInUMAP_f(
-                                        fileStatusUMAP_par
-                                        , sourceFileTmp
-                                        , mutexName_par_con
+                                        sourceFileTmp
                                         )
                                     );
                         //if a copy happened or the file it's the same consider it as successful
@@ -306,4 +305,30 @@ bool hashDirectoryInUMAP_f(std::unordered_map<std::string, fileStatus_s>& fileSt
         }
     }
     return result;
+}
+
+std::string fileHashControl_c::mutexName_f() const
+{
+    return mutexName_pri;
+}
+
+fileHashControl_c::fileHashControl_c(const std::string& mutexName_pri) : mutexName_pri(mutexName_pri)
+{
+}
+
+bool fileHashControl_c::fileStatusUMAPChanged_f()
+{
+    if (not mutexName_pri.empty())
+    {
+        QMutexLocker locker1(getAddMutex_f(mutexName_pri));
+        bool result(fileStatusUMAPChanged_pri);
+        fileStatusUMAPChanged_pri = false;
+        return result;
+    }
+    else
+    {
+        bool result(fileStatusUMAPChanged_pri);
+        fileStatusUMAPChanged_pri = false;
+        return result;
+    }
 }
