@@ -222,7 +222,7 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
         for (const QString& filename_ite_con : rootFileList)
         {
             //QOUT_TS("filename_ite_con " << filename_ite_con << endl);
-            QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + QDir::separator() + filename_ite_con);
+            QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + "/" + filename_ite_con);
             const auto resultFile(
                         hashFileInUMAP_f(
                             sourceFileTmp
@@ -248,16 +248,16 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                 //qDebug() << "folder_ite_con " << subfolder_ite_con << endl;
 
                 //do a QDir of the subfolder, using the initial folder + all the subfolder "depth" that has been traveled/iterated
-                QDir currentSubfolderDirTmp(source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con);
+                QDir currentSubfolderDirTmp(source_par_con.absoluteFilePath() + "/" + subfolder_ite_con);
 
                 //get the subfolders of the one it's iterating
                 QStringList subFoldersTmp(currentSubfolderDirTmp.entryList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot | QDir::NoSymLinks));
                 //for the found subfolder, prepend the previous subfolder path string
                 for (auto& subfolderTmp_ite : subFoldersTmp)
                 {
-                    //qDebug() << "subfolder_ite_con + QDir::separator() + subfolderTmp_ite " << subfolder_ite_con + QDir::separator() + subfolderTmp_ite << endl;
+                    //qDebug() << "subfolder_ite_con + "/" + subfolderTmp_ite " << subfolder_ite_con + "/" + subfolderTmp_ite << endl;
                     //prepend the parent subfolder
-                    subfolderTmp_ite.prepend(subfolder_ite_con + QDir::separator());
+                    subfolderTmp_ite.prepend(subfolder_ite_con + "/");
                 }
                 newSubfoldersTmp.append(subFoldersTmp);
 
@@ -284,8 +284,8 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                     QStringList subDirectoryFileList(currentSubfolderDirTmp.entryList(filenameFilters_par_con, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot));
                     for (const auto& filename_ite_con : subDirectoryFileList)
                     {
-                        //qDebug() << "source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con " << source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con << endl;
-                        QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + QDir::separator() + subfolder_ite_con + QDir::separator() + filename_ite_con);
+                        //qDebug() << "source_par_con.absoluteFilePath() + "/" + subfolder_ite_con + "/" + filename_ite_con " << source_par_con.absoluteFilePath() + "/" + subfolder_ite_con + "/" + filename_ite_con << endl;
+                        QFileInfo sourceFileTmp(source_par_con.absoluteFilePath() + "/" + subfolder_ite_con + "/" + filename_ite_con);
                         const auto resultFile(
                                     hashFileInUMAP_f(
                                         sourceFileTmp
@@ -293,6 +293,10 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                                     );
                         //if a copy happened or the file it's the same consider it as successful
                         result = result or resultFile;
+                        if (not eines::signal::isRunning_f())
+                        {
+                            return result;
+                        }
                     }
                 }
             }
