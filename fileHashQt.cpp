@@ -1,6 +1,6 @@
 #include "fileHashQt.hpp"
 
-//#include "essentialQtso/essentialQt.hpp"
+#include "signalso/signal.hpp"
 #include "criptoQtso/hashQt.hpp"
 #include "qmutexUMapQtso/qmutexUMapQt.hpp"
 
