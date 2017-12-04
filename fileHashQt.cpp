@@ -230,6 +230,10 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                         );
             //last result and a copy happened or nothing changed
             result = result or resultFile;
+            if (not eines::signal::isRunning_f())
+            {
+                return result;
+            }
         }
     }
 
