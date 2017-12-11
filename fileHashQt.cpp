@@ -18,12 +18,22 @@ fileStatus_s::fileStatus_s(
     , hash_pub(hash_par_con)
     , fileLastModificationDatetime_pub(fileLastModificationDatetime_par_con)
     , fileSize_pub(fileSize_par_con)
+    , hashed_pub(true)
 {}
+
 
 void fileStatus_s::read_f(const QJsonObject &json)
 {
     filename_pub = json["filename"].toString();
-    hash_pub = json["hash"].toString().toULongLong();
+    if (json["hash"].isNull())
+    {
+        hashed_pub = false;
+    }
+    else
+    {
+        hash_pub = json["hash"].toString().toULongLong();
+        hashed_pub = true;
+    }
     fileSize_pub = json["fileSize"].toString().toULongLong();
     fileLastModificationDatetime_pub = json["fileLastModificationDatetime"].toString().toLongLong();
 }
@@ -33,7 +43,10 @@ void fileStatus_s::write_f(QJsonObject &json) const
     json["filename"] = filename_pub;
     //json/javascript can't fit 64bit numbers, IEEE 754 shit, which is floating point, not integer, so it's less than a 64bit integer
     //so... use string notation
-    json["hash"] = QString::number(hash_pub);
+    if (hashed_pub)
+    {
+        json["hash"] = QString::number(hash_pub);
+    }
     json["fileSize"] = QString::number(fileSize_pub);
     json["fileLastModificationDatetime"] = QString::number(fileLastModificationDatetime_pub);
 }
@@ -120,8 +133,8 @@ bool fileHashControl_c::hashFileInUMAP_f(
             fileStatusUMAPChanged_pri = true;
             sourceDatetimeChanged = true;
         }
-        //if time changed, check hash
-        if (sourceDatetimeChanged)
+        //if time changed or no hash, check hash
+        if (sourceDatetimeChanged or not findFileStatusResult->second.hashed_pub)
         {
             //qout_glo << "hashing source (datetime changed)" << endl;
             findFileStatusResult->second.hashing_pub = true;
@@ -137,17 +150,22 @@ bool fileHashControl_c::hashFileInUMAP_f(
                 //since the UMap could have changed because of the unlocking, find again
                 findFileStatusResult = fileStatusUMAP_pub.find(source_par_con.absoluteFilePath().toStdString());
             }
-            //same hash
-            if (fileNewHastTmp == currentHashTmp)
-            {
-                //file hash hasn't changed, nothing to do
-            }
-            else
+            //hash mismatch or no hash
+            if (fileNewHastTmp != currentHashTmp or not findFileStatusResult->second.hashed_pub)
             {
                 //update hash on source umap
                 findFileStatusResult->second.hash_pub = fileNewHastTmp;
+                if (not findFileStatusResult->second.hashed_pub)
+                {
+                    findFileStatusResult->second.hashed_pub = true;
+                }
                 fileStatusUMAPChanged_pri = true;
                 sourceChanged = true;
+
+            }
+            else
+            {
+                //file hash hasn't changed, nothing to do
             }
             findFileStatusResult->second.hashing_pub = false;
         }
@@ -163,10 +181,19 @@ bool fileHashControl_c::hashFileInUMAP_f(
         //qout_glo << "hashing source (initial run)" << endl;
         fileStatus_s sourceFileStatus(
                source_par_con.absoluteFilePath()
-               , getFileHash_f(source_par_con.absoluteFilePath())
+               , 0
                , source_par_con.lastModified().toMSecsSinceEpoch()
                , source_par_con.size()
         );
+        if (hashInitially_pri)
+        {
+            sourceFileStatus.hash_pub = getFileHash_f(source_par_con.absoluteFilePath());
+            //hashed is true by default
+        }
+        else
+        {
+            sourceFileStatus.hashed_pub = false;
+        }
 
         if (not mutexName_pri.empty())
         {
@@ -320,7 +347,11 @@ std::string fileHashControl_c::mutexName_f() const
     return mutexName_pri;
 }
 
-fileHashControl_c::fileHashControl_c(const std::string& mutexName_pri) : mutexName_pri(mutexName_pri)
+fileHashControl_c::fileHashControl_c(
+        const bool hashInitially_par_con
+        , const std::string& mutexName_pri)
+    : hashInitially_pri(hashInitially_par_con)
+    , mutexName_pri(mutexName_pri)
 {
 }
 
