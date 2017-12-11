@@ -18,14 +18,13 @@ fileStatus_s::fileStatus_s(
     , hash_pub(hash_par_con)
     , fileLastModificationDatetime_pub(fileLastModificationDatetime_par_con)
     , fileSize_pub(fileSize_par_con)
-    , hashed_pub(true)
 {}
 
 
 void fileStatus_s::read_f(const QJsonObject &json)
 {
     filename_pub = json["filename"].toString();
-    if (json["hash"].isNull())
+    if (json["hash"].isUndefined())
     {
         hashed_pub = false;
     }
