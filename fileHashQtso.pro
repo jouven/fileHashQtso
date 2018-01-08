@@ -4,7 +4,8 @@ QT -= gui
 TARGET = fileHashQtso
 TEMPLATE = lib
 
-QMAKE_CXXFLAGS += -std=c++17
+!android:QMAKE_CXXFLAGS += -std=c++17
+android:CONFIG += c++14
 CONFIG += no_keywords plugin
 
 # The following define makes your compiler emit warnings if you use
@@ -30,19 +31,39 @@ win32:MYPATH = "H:/veryuseddata/portable/msys64/"
 #mine
 INCLUDEPATH += $${MYPATH}home/jouven/mylibs/include
 
+if (!android){
 #don't new line the "{"
 #release
 CONFIG(release, debug|release){
-    LIBS += -L$${MYPATH}home/jouven/mylibs/release/
+    LIBS += -L$${MYPATH}home/jouven/mylibs/release
     DEPENDPATH += $${MYPATH}home/jouven/mylibs/release
     QMAKE_RPATHDIR += $${MYPATH}home/jouven/mylibs/release
 }
 #debug
 CONFIG(debug, debug|release){
-    LIBS += -L$${MYPATH}home/jouven/mylibs/debug/ -lbackwardSTso #-lessentialQtso
+    LIBS += -L$${MYPATH}home/jouven/mylibs/debug -lbackwardSTso #-lessentialQtso
     DEPENDPATH += $${MYPATH}home/jouven/mylibs/debug
     QMAKE_RPATHDIR += $${MYPATH}home/jouven/mylibs/debug
     DEFINES += DEBUGJOUVEN
+}
+}
+
+if (android)
+{
+#release
+CONFIG(release, debug|release){
+    LIBS += -L$${MYPATH}home/jouven/mylibsAndroid/release
+    DEPENDPATH += $${MYPATH}home/jouven/mylibsAndroid/release
+    QMAKE_RPATHDIR += $${MYPATH}home/jouven/mylibsAndroid/release
+}
+#debug
+CONFIG(debug, debug|release){
+    LIBS += -L$${MYPATH}home/jouven/mylibsAndroid/debug
+    DEPENDPATH += $${MYPATH}home/jouven/mylibsAndroid/debug
+    QMAKE_RPATHDIR += $${MYPATH}home/jouven/mylibsAndroid/debug
+    DEFINES += DEBUGJOUVEN
+
+}
 }
 
 LIBS += -lcriptoQtso -lqmutexUMapQtso -lsignalso
@@ -51,15 +72,13 @@ QMAKE_CXXFLAGS_DEBUG -= -g
 QMAKE_CXXFLAGS_DEBUG += -pedantic -Wall -Wextra -g3
 
 #if not win32, add flto, mingw (on msys2) can't handle lto
-unix:QMAKE_CXXFLAGS_RELEASE += -flto=jobserver
-#qt QMAKE defaults strike again, adds -mtune=core2 just because in win32
-win32:QMAKE_CXXFLAGS -= -mtune=core2
-QMAKE_CXXFLAGS_RELEASE += -mtune=sandybridge
+linux:QMAKE_CXXFLAGS_RELEASE += -flto=jobserver
+!android:QMAKE_CXXFLAGS_RELEASE += -mtune=sandybridge
 
 #for -flto=jobserver in the link step to work with -j4
-unix:QMAKE_LINK = +g++
+linux:!android:QMAKE_LINK = +g++
 
-unix:QMAKE_LFLAGS += -fuse-ld=gold
+linux:QMAKE_LFLAGS += -fuse-ld=gold
 QMAKE_LFLAGS_RELEASE += -fvisibility=hidden
 #if not win32, add flto, mingw (on msys2) can't handle lto
-unix:QMAKE_LFLAGS_RELEASE += -flto=jobserver
+linux:QMAKE_LFLAGS_RELEASE += -flto=jobserver
