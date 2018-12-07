@@ -7,6 +7,8 @@ TEMPLATE = lib
 !android:QMAKE_CXXFLAGS += -std=c++17
 android:CONFIG += c++14
 CONFIG += no_keywords plugin
+#(only windows) fixes the extra tier of debug and release build directories inside the first build directories
+win32:CONFIG -= debug_and_release
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -48,8 +50,7 @@ CONFIG(debug, debug|release){
 }
 }
 
-if (android)
-{
+if (android){
 #release
 CONFIG(release, debug|release){
     LIBS += -L$${MYPATH}home/jouven/mylibsAndroid/release
