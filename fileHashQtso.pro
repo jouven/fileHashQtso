@@ -72,14 +72,11 @@ LIBS += -lcriptoQtso -lqmutexUMapQtso -lsignalso
 QMAKE_CXXFLAGS_DEBUG -= -g
 QMAKE_CXXFLAGS_DEBUG += -pedantic -Wall -Wextra -g3
 
+linux:QMAKE_LFLAGS += -fuse-ld=gold
+QMAKE_LFLAGS_RELEASE += -fvisibility=hidden
 #if not win32, add flto, mingw (on msys2) can't handle lto
 linux:QMAKE_CXXFLAGS_RELEASE += -flto=jobserver
 !android:QMAKE_CXXFLAGS_RELEASE += -mtune=sandybridge
 
 #for -flto=jobserver in the link step to work with -j4
 linux:!android:QMAKE_LINK = +g++
-
-linux:QMAKE_LFLAGS += -fuse-ld=gold
-QMAKE_LFLAGS_RELEASE += -fvisibility=hidden
-#if not win32, add flto, mingw (on msys2) can't handle lto
-linux:QMAKE_LFLAGS_RELEASE += -flto=jobserver
