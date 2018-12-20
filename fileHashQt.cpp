@@ -1,7 +1,7 @@
 #include "fileHashQt.hpp"
 
 #include "signalso/signal.hpp"
-#include "criptoQtso/hashQt.hpp"
+#include "cryptoQtso/hashQt.hpp"
 #include "qmutexUMapQtso/qmutexUMapQt.hpp"
 
 #include <QJsonArray>

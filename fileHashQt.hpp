@@ -1,6 +1,14 @@
 #ifndef FILEHASHQTSO_FILEHASH_HPP
 #define FILEHASHQTSO_FILEHASH_HPP
 
+//library permits to get information from files or directories (the files in them)
+//information: absolute filename (full path), hash, lastModificationDatetime, file size
+//and allows to serialize/deserialize it in JSON
+//prevents duplicate entries
+//mostly thread-safe, the fileHashControl_c class
+
+#include "crossPlatformMacros.hpp"
+
 #include <QString>
 #include <QStringList>
 #include <QJsonObject>
@@ -10,7 +18,7 @@
 #include <vector>
 #include <unordered_map>
 
-struct fileStatus_s
+struct EXPIMP_FILEHASHQTSO fileStatus_s
 {
     //no need for sets because, initially the last modification datetime = 0 means 1970...
     //I don't think anyone has a file of that "epoch" pun intended
@@ -33,7 +41,7 @@ struct fileStatus_s
     void write_f(QJsonObject &json) const;
 };
 
-struct fileStatusArray_s
+struct EXPIMP_FILEHASHQTSO fileStatusArray_s
 {
     std::vector<fileStatus_s> fileStatusVector_pub;
 
@@ -45,9 +53,9 @@ struct fileStatusArray_s
 };
 
 //uses xxhash
-uint_fast64_t getFileHash_f(const QString &filepath_par_con);
+uint_fast64_t EXPIMP_FILEHASHQTSO getFileHash_f(const QString &filepath_par_con);
 
-class fileHashControl_c
+class EXPIMP_FILEHASHQTSO fileHashControl_c
 {
     bool fileStatusUMAPChanged_pri = false;
     //when iterating any file for the first time don't hash it,
@@ -88,9 +96,5 @@ public:
     bool fileStatusUMAPChanged_f();
     std::string mutexName_f() const;
 };
-
-
-
-
 
 #endif // FILEHASHQTSO_FILEHASH_HPP
