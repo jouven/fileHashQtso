@@ -256,7 +256,7 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                         );
             //last result and a copy happened or nothing changed
             result = result or resultFile;
-            if (not eines::signal::isRunning_f())
+            if (not signalso::isRunning_f())
             {
                 return result;
             }
@@ -323,7 +323,7 @@ bool fileHashControl_c::hashDirectoryInUMAP_f(
                                     );
                         //if a copy happened or the file it's the same consider it as successful
                         result = result or resultFile;
-                        if (not eines::signal::isRunning_f())
+                        if (not signalso::isRunning_f())
                         {
                             return result;
                         }
