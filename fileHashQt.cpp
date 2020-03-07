@@ -87,12 +87,12 @@ fileStatusArray_s::fileStatusArray_s(
 
 uint_fast64_t getFileHash_f(const QString& filepath_par_con)
 {
-    eines::hasher_c hasher
+    hasher_c hasher
     (
-        eines::hasher_c::inputType_ec::file
+        hasher_c::inputType_ec::file
         , filepath_par_con
-        , eines::hasher_c::outputType_ec::unsignedXbitInteger
-        , eines::hasher_c::hashType_ec::XXHASH64
+        , hasher_c::outputType_ec::unsignedXbitInteger
+        , hasher_c::hashType_ec::XXHASH64
     );
     hasher.generateHash_f();
     return hasher.hash64BitNumberResult_f();
